@@ -1,9 +1,12 @@
 import Foundation
 
-class StoryGenerator {
+class StoryGenerator: ObservableObject {
+    
+    private let apiKey = APIConfig.getAPIKey()
+    private let baseURL = APIConfig.anthropicBaseURL
     
     // Story templates for different emoji combinations
-    private let storyTemplates: [String: String] = [
+    private let emojiMeanings: [String: String] = [
         "🌙": "moon",
         "⭐": "star",
         "🦄": "unicorn",
@@ -26,111 +29,162 @@ class StoryGenerator {
         "🌻": "sunflower"
     ]
     
-    private let openings = [
-        "Once upon a time, in a magical land far away",
-        "Long ago, when the world was young and full of wonder",
-        "In a cozy little village where dreams come true",
-        "On a peaceful evening when the stars began to twinkle",
-        "In an enchanted forest where magic happens every day"
-    ]
+    struct ClaudeRequest: Codable {
+        let model: String
+        let max_tokens: Int
+        let messages: [Message]
+        let system: String?
+        
+        struct Message: Codable {
+            let role: String
+            let content: String
+        }
+    }
     
-    private let endings = [
-        "And they all lived happily ever after, sleeping soundly under the starry sky. The end. 🌙✨",
-        "As the moon rose high, everyone fell into the most peaceful dreams. Sweet dreams! 💤",
-        "They curled up together, safe and warm, and drifted off to wonderful dreams. Goodnight! 🌟",
-        "With hearts full of joy and love, they slept peacefully through the night. The end. 💕",
-        "And so, with smiles on their faces, they had the most magical dreams until morning came. 🌅"
-    ]
+    struct ClaudeResponse: Codable {
+        let content: [Content]
+        let usage: Usage?
+        
+        struct Content: Codable {
+            let text: String
+            let type: String
+        }
+        
+        struct Usage: Codable {
+            let input_tokens: Int
+            let output_tokens: Int
+        }
+    }
     
-    func generateStory(from emojis: [String]) -> String {
+    struct StoryGenerationError: Error, LocalizedError {
+        let message: String
+        
+        var errorDescription: String? {
+            return message
+        }
+    }
+    
+    func generateStory(from emojis: [String]) async throws -> String {
         if emojis.isEmpty {
             return "Select some emojis to create your bedtime story!"
         }
         
+        // Check if API key is configured
+        guard APIConfig.isAPIKeyConfigured() else {
+            throw StoryGenerationError(message: "API key not configured. Please add your Anthropic API key in Config.swift")
+        }
+        
         // Convert emojis to words
         let characters = emojis.compactMap { emoji in
-            storyTemplates[emoji]
+            emojiMeanings[emoji]
         }
         
-        // Select random opening
-        let opening = openings.randomElement() ?? openings[0]
+        if characters.isEmpty {
+            return "Please select some story characters to create your bedtime story!"
+        }
         
-        // Generate story based on characters
-        let story = createStoryNarrative(characters: characters)
+        let charactersText = characters.joined(separator: ", ")
         
-        // Select random ending
-        let ending = endings.randomElement() ?? endings[0]
+        let systemPrompt = """
+        You are a creative storyteller who writes gentle, age-appropriate bedtime stories for children aged 1-6 years old. 
         
-        return "\(opening), \(story) \(ending)"
+        Guidelines:
+        - Stories should be 3-5 sentences long
+        - Use simple, positive language
+        - Include themes of friendship, kindness, and helping others
+        - Always end with a peaceful, sleepy conclusion
+        - Make the story magical and comforting
+        - Avoid scary or sad elements
+        - Include the specified characters naturally in the story
+        """
+        
+        let userPrompt = """
+        Create a gentle bedtime story featuring these characters: \(charactersText)
+        
+        Make it magical, comforting, and perfect for helping a young child fall asleep peacefully.
+        """
+        
+        let requestBody = ClaudeRequest(
+            model: "claude-3-haiku-20240307",
+            max_tokens: APIConfig.maxTokens,
+            messages: [
+                ClaudeRequest.Message(role: "user", content: userPrompt)
+            ],
+            system: systemPrompt
+        )
+        
+        guard let url = URL(string: baseURL) else {
+            throw StoryGenerationError(message: "Invalid API URL")
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(APIConfig.anthropicVersion, forHTTPHeaderField: "anthropic-version")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.timeoutInterval = APIConfig.timeoutInterval
+        
+        do {
+            let jsonData = try JSONEncoder().encode(requestBody)
+            request.httpBody = jsonData
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw StoryGenerationError(message: "Invalid response")
+            }
+            
+            if httpResponse.statusCode != 200 {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw StoryGenerationError(message: "API Error (\(httpResponse.statusCode)): \(errorMessage)")
+            }
+            
+            let claudeResponse = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+            
+            guard let firstContent = claudeResponse.content.first else {
+                throw StoryGenerationError(message: "No content in response")
+            }
+            
+            return firstContent.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+        } catch let error as StoryGenerationError {
+            throw error
+        } catch {
+            throw StoryGenerationError(message: "Network error: \(error.localizedDescription)")
+        }
     }
     
-    private func createStoryNarrative(characters: [String]) -> String {
-        if characters.isEmpty {
-            return "there was a wonderful place where anything was possible."
+    // Fallback story generator for when API is not available
+    func generateFallbackStory(from emojis: [String]) -> String {
+        let characters = emojis.compactMap { emoji in
+            emojiMeanings[emoji]
         }
+        
+        if characters.isEmpty {
+            return "Please select some emojis to create your bedtime story!"
+        }
+        
+        let fallbackOpenings = [
+            "Once upon a time, in a magical land far away",
+            "Long ago, when the world was young and full of wonder",
+            "In a cozy little village where dreams come true"
+        ]
+        
+        let fallbackEndings = [
+            "And they all lived happily ever after, sleeping soundly under the starry sky. The end. 🌙✨",
+            "As the moon rose high, everyone fell into the most peaceful dreams. Sweet dreams! 💤",
+            "They curled up together, safe and warm, and drifted off to wonderful dreams. Goodnight! 🌟"
+        ]
+        
+        let opening = fallbackOpenings.randomElement() ?? fallbackOpenings[0]
+        let ending = fallbackEndings.randomElement() ?? fallbackEndings[0]
         
         if characters.count == 1 {
-            return createSingleCharacterStory(character: characters[0])
+            return "\(opening), there lived a wonderful \(characters[0]) who brought joy and happiness to everyone around. This magical friend had many adventures and always helped others. \(ending)"
         } else {
-            return createMultiCharacterStory(characters: characters)
+            let primary = characters[0]
+            let secondary = characters[1]
+            return "\(opening), lived a kind \(primary) and a gentle \(secondary) who were the best of friends. Together, they went on magical adventures, always helping others and spreading joy wherever they went. \(ending)"
         }
-    }
-    
-    private func createSingleCharacterStory(character: String) -> String {
-        let stories: [String: [String]] = [
-            "moon": [
-                "there lived a gentle moon who watched over all the sleeping children. Every night, the moon would sing soft lullabies to help everyone have sweet dreams.",
-                "the moon decided to visit Earth. She sprinkled stardust everywhere, making flowers glow and turning puddles into mirrors that reflected beautiful dreams."
-            ],
-            "star": [
-                "lived a little star who was too shy to shine. With the help of kind friends, the star learned that even the smallest light can guide someone home.",
-                "a shooting star granted wishes to all the good children. The star traveled across the sky, leaving trails of sparkles and making dreams come true."
-            ],
-            "unicorn": [
-                "lived a friendly unicorn with a rainbow mane. The unicorn loved to help lost animals find their way home and always had a warm hug for anyone who needed one.",
-                "there was a magical unicorn who could heal sadness with her horn. She would visit children who felt scared and fill their hearts with courage and love."
-            ],
-            "bear": [
-                "lived a cuddly bear who loved to tell stories. Every evening, forest animals would gather around while the bear shared tales of adventure and friendship.",
-                "there was a gentle bear who collected hugs. The bear would travel from house to house, giving the warmest, softest hugs to help children feel safe and loved."
-            ],
-            "bunny": [
-                "lived a playful bunny who loved to hop through meadows. The bunny would collect the softest clouds to make pillows for tired forest friends.",
-                "there was a wise bunny who knew the secret to sweet dreams. The bunny would whisper magical words that chased away any worries and brought peaceful sleep."
-            ]
-        ]
-        
-        let characterStories = stories[character] ?? [
-            "there was a wonderful \(character) who brought joy and happiness to everyone around. This magical friend had many adventures and always helped others."
-        ]
-        
-        return characterStories.randomElement() ?? characterStories[0]
-    }
-    
-    private func createMultiCharacterStory(characters: [String]) -> String {
-        let primary = characters[0]
-        let secondary = characters[1]
-        
-        // Create friendship-based stories
-        let friendshipStories = [
-            "lived a kind \(primary) and a gentle \(secondary) who were the best of friends. Together, they went on magical adventures, always helping others and spreading joy wherever they went. They discovered that friendship makes every day brighter and every problem easier to solve.",
-            
-            "there was a brave \(primary) who met a wise \(secondary). They became fast friends and decided to help all the creatures in their magical world. Together, they built a place where everyone felt safe, loved, and happy.",
-            
-            "lived a curious \(primary) and a caring \(secondary) who loved to explore. They found a secret garden where they planted seeds of kindness that grew into beautiful flowers of friendship. All the animals came to visit and play in their wonderful garden.",
-            
-            "there was a playful \(primary) and a thoughtful \(secondary) who discovered they could create rainbows together. They painted the sky with beautiful colors and made sure every child could see the magic in the world around them."
-        ]
-        
-        // Add other characters to the story if there are more
-        var story = friendshipStories.randomElement() ?? friendshipStories[0]
-        
-        if characters.count > 2 {
-            let additionalCharacters = characters.dropFirst(2)
-            let characterList = additionalCharacters.joined(separator: ", ")
-            story += " Along the way, they met other wonderful friends like \(characterList), and together they created the most magical adventures filled with laughter, love, and wonder."
-        }
-        
-        return story
     }
 }

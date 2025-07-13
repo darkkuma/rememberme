@@ -1,10 +1,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var storyGenerator = StoryGenerator()
     @State private var storyEmojis: [String] = []
     @State private var generatedStory: String = ""
     @State private var showStory = false
     @State private var isGenerating = false
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     
     let availableEmojis = ["🌙", "⭐", "🦄", "🐻", "🌸", "🏰", "🚂", "🐰", "🌊", "🔥", "🌳", "🦋", "🎈", "🍎", "🐸", "🌈", "☁️", "🕊️", "🦔", "🌻"]
     
@@ -92,7 +95,11 @@ struct ContentView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     
-                    Button(action: generateStory) {
+                    Button(action: {
+                        Task {
+                            await generateStory()
+                        }
+                    }) {
                         HStack {
                             if isGenerating {
                                 ProgressView()
@@ -111,24 +118,56 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 
+                // API status indicator
+                if isGenerating {
+                    HStack {
+                        Image(systemName: "wand.and.rays")
+                            .foregroundColor(.white)
+                        Text("Creating your magical story...")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding(.horizontal)
+                }
+                
                 Spacer()
             }
         }
         .sheet(isPresented: $showStory) {
             StoryView(story: generatedStory, emojis: storyEmojis)
         }
+        .alert("Story Generation Error", isPresented: $showErrorAlert) {
+            Button("Try Again") {
+                Task {
+                    await generateStory()
+                }
+            }
+            Button("Use Offline Story") {
+                generateOfflineStory()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
-    private func generateStory() {
+    private func generateStory() async {
         isGenerating = true
         
-        // Simulate story generation delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let storyGenerator = StoryGenerator()
-            generatedStory = storyGenerator.generateStory(from: storyEmojis)
-            isGenerating = false
+        do {
+            generatedStory = try await storyGenerator.generateStory(from: storyEmojis)
             showStory = true
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
         }
+        
+        isGenerating = false
+    }
+    
+    private func generateOfflineStory() {
+        generatedStory = storyGenerator.generateFallbackStory(from: storyEmojis)
+        showStory = true
     }
 }
 
@@ -196,6 +235,16 @@ struct StoryView: View {
                         .shadow(radius: 2)
                 }
                 .padding(.horizontal)
+                
+                // AI attribution
+                HStack {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(.purple.opacity(0.7))
+                    Text("Story created with AI ✨")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
                 
                 Spacer()
             }

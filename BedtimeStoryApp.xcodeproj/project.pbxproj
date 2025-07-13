@@ -12,6 +12,7 @@
 		1A111111111111111111111111111115 /* StoryGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A111111111111111111111111111116 /* StoryGenerator.swift */; };
 		1A111111111111111111111111111117 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A111111111111111111111111111118 /* Assets.xcassets */; };
 		1A111111111111111111111111111119 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A11111111111111111111111111111A /* Preview Assets.xcassets */; };
+		1A11111111111111111111111111111B /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A11111111111111111111111111111D /* Config.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		1A111111111111111111111111111118 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1A11111111111111111111111111111A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1A11111111111111111111111111111C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1A11111111111111111111111111111D /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +51,7 @@
 				1A111111111111111111111111111112 /* BedtimeStoryApp.swift */,
 				1A111111111111111111111111111114 /* ContentView.swift */,
 				1A111111111111111111111111111116 /* StoryGenerator.swift */,
+				1A11111111111111111111111111111D /* Config.swift */,
 				1A111111111111111111111111111118 /* Assets.xcassets */,
 				1A11111111111111111111111111111C /* Info.plist */,
 				1A111111111111111111111111111123 /* Preview Content */,
@@ -144,6 +147,7 @@
 			files = (
 				1A111111111111111111111111111113 /* ContentView.swift in Sources */,
 				1A111111111111111111111111111115 /* StoryGenerator.swift in Sources */,
+				1A11111111111111111111111111111B /* Config.swift in Sources */,
 				1A111111111111111111111111111111 /* BedtimeStoryApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

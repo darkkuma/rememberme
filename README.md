@@ -1,15 +1,16 @@
 # 🌙 Bedtime Stories App
 
-A delightful SwiftUI iOS app that generates personalized bedtime stories for children aged 1-6 years old using drag-and-drop emojis.
+A delightful SwiftUI iOS app that generates personalized bedtime stories for children aged 1-6 years old using drag-and-drop emojis. Powered by **Anthropic Claude Haiku** for cost-efficient, high-quality story generation.
 
 ## ✨ Features
 
+- **AI-Powered Stories**: Uses Anthropic Claude Haiku for creative, age-appropriate story generation
 - **Drag & Drop Interface**: Kids can easily drag emojis to create their story elements
-- **Age-Appropriate Stories**: Stories are specifically designed for 1-6 year olds with simple, positive themes
+- **Cost-Efficient**: Claude Haiku provides excellent stories at ~$0.0001-0.0002 per story
 - **Beautiful UI**: Child-friendly design with colorful gradients and smooth animations
-- **Instant Story Generation**: Stories are generated in real-time based on selected emojis
+- **Real-Time Generation**: Stories are generated instantly based on selected emojis
 - **Variety of Characters**: 20 different emojis including animals, nature, and magical elements
-- **Multiple Story Templates**: Different story variations for single characters or multiple characters
+- **Offline Fallback**: Works offline with pre-programmed stories when API is unavailable
 - **Friendship & Kindness Themes**: All stories focus on positive values like friendship, kindness, and helping others
 
 ## 🎨 How It Works
@@ -31,7 +32,8 @@ The app includes 20 carefully selected emojis perfect for bedtime stories:
 BedtimeStoryApp/
 ├── BedtimeStoryApp.swift          # Main app entry point
 ├── ContentView.swift              # Main UI with drag-and-drop functionality
-├── StoryGenerator.swift           # Story generation logic
+├── StoryGenerator.swift           # AI story generation with Claude Haiku
+├── Config.swift                   # API configuration and settings
 ├── Info.plist                     # App configuration
 ├── Assets.xcassets/               # App icons and colors
 └── Preview Content/               # Preview assets for development
@@ -43,12 +45,32 @@ BedtimeStoryApp/
 - Xcode 15.0 or later
 - iOS 17.0 or later
 - Swift 5.0
+- Anthropic API account (for AI story generation)
+
+### API Setup
+1. **Get your Anthropic API key**:
+   - Go to [console.anthropic.com](https://console.anthropic.com)
+   - Create an account or sign in
+   - Navigate to API Keys section
+   - Create a new API key
+
+2. **Configure the app**:
+   - Open `BedtimeStoryApp/Config.swift`
+   - Replace `"your-anthropic-api-key-here"` with your actual API key
+   - Save the file
 
 ### Installation
 1. Clone the repository
 2. Open `BedtimeStoryApp.xcodeproj` in Xcode
-3. Select your target device or simulator
-4. Build and run the app
+3. Configure your API key (see API Setup above)
+4. Select your target device or simulator
+5. Build and run the app
+
+### Cost Information
+- **Claude Haiku Pricing**: ~$0.25/1M input tokens, ~$1.25/1M output tokens
+- **Per Story Cost**: ~$0.0001-0.0002 (extremely cost-efficient)
+- **Monthly Usage**: 1000 stories ≈ $0.10-0.20
+- **Monitor Usage**: Track consumption at [console.anthropic.com/usage](https://console.anthropic.com/usage)
 
 ### Usage
 1. Launch the app
@@ -81,28 +103,55 @@ BedtimeStoryApp/
 
 - **SwiftUI**: Modern, declarative UI framework
 - **Drag and Drop**: Native iOS drag-and-drop API implementation
-- **Dynamic Story Generation**: Algorithm that creates varied stories based on emoji combinations
+- **AI Integration**: Anthropic Claude Haiku API for creative story generation
+- **Async/Await**: Modern Swift concurrency for smooth API calls
+- **Error Handling**: Comprehensive error handling with fallback options
+- **Offline Support**: Works without internet using pre-programmed stories
+- **Cost Optimization**: Efficient token usage and request management
 - **Responsive Design**: Works on both iPhone and iPad
 - **Smooth Animations**: Delightful transitions and loading states
 
 ## 🌟 Future Enhancements
 
-- Voice narration for generated stories
-- Save favorite stories feature
-- More emoji characters and themes
-- Custom emoji upload
-- Story sharing with family
-- Multiple language support
-- Dark mode optimization
+- **AI Improvements**: 
+  - Character consistency across stories
+  - Story length customization
+  - Personalized story themes
+- **Features**:
+  - Voice narration for generated stories
+  - Save favorite stories feature
+  - More emoji characters and themes
+  - Custom emoji upload
+  - Story sharing with family
+- **Technical**:
+  - Multiple language support
+  - Dark mode optimization
+  - Local story caching
+  - Usage analytics and cost tracking
+  - Alternative LLM providers (OpenAI, Gemini)
 
 ## 📄 License
 
 This project is created for educational and personal use. Feel free to modify and adapt it for your needs.
 
+## 🔒 Security & Privacy
+
+- **API Keys**: Never commit API keys to version control
+- **Environment Variables**: Use environment variables for production deployments
+- **Data Privacy**: Stories are generated in real-time and not stored by the app
+- **Anthropic Privacy**: Review [Anthropic's privacy policy](https://www.anthropic.com/privacy) for API usage
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests to improve the app.
 
+### Contributing Guidelines
+- Test all changes with actual API calls
+- Update cost estimates if token usage changes
+- Add fallback handling for new features
+- Follow SwiftUI best practices
+
 ---
 
-*Made with ❤️ for bedtime stories and sweet dreams* 🌙✨
+*Made with ❤️ for bedtime stories and sweet dreams* 🌙✨  
+*Powered by Anthropic Claude Haiku for cost-efficient AI storytelling*
