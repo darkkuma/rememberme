@@ -1,4 +1,4 @@
-# 🌙 Bedtime Stories App
+# 🌙 베디 Beddie
 
 A delightful SwiftUI iOS app that generates personalized bedtime stories for children aged 1-6 years old using drag-and-drop emojis. Powered by **Anthropic Claude Haiku** for cost-efficient, high-quality story generation.
 
